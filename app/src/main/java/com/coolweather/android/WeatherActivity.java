@@ -1,12 +1,16 @@
 package com.coolweather.android;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -68,6 +72,12 @@ public class WeatherActivity extends AppCompatActivity {
     
     private ImageView bingPicImg;
 
+    public SwipeRefreshLayout swipeRefresh;
+
+    public DrawerLayout drawerLayout;
+
+    private Button navButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -91,12 +101,17 @@ public class WeatherActivity extends AppCompatActivity {
         cwText = findViewById(R.id.cw_text);
         airText = findViewById(R.id.air_text);
         bingPicImg = findViewById(R.id.bing_pic_img);
+        swipeRefresh = findViewById(R.id.swipe_refresh);
+        swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
+        drawerLayout = findViewById(R.id.drawer_layout);
+        navButton = findViewById(R.id.nav_button);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String bingPic = prefs.getString("bing_pic", null);
         String nowWeatherString = prefs.getString("NowWeather",null);
         String forecastWeatherString = prefs.getString("ForecastWeather", null);
         String lifestyleString = prefs.getString("LifestyleWeather", null);
+        final String weatherId;
         if (bingPic != null) {
             Glide.with(this).load(bingPic).into(bingPicImg);
         } else {
@@ -107,15 +122,28 @@ public class WeatherActivity extends AppCompatActivity {
             NowWeather nowWeather = Utility.handleNowWeatherResponse(nowWeatherString);
             ForecastWeather forecastWeather = Utility.handleForecastWeatherResponse(forecastWeatherString);
             LifestyleWeather lifestyleWeather = Utility.handleLifestyleWeatherResponse(lifestyleString);
+            weatherId = nowWeather.basic.weatherId;
             showWeatherInfo(nowWeather);
             showWeatherInfo(forecastWeather);
             showWeatherInfo(lifestyleWeather);
         } else {
             // 无缓存时去服务器查询天气
-            String weatherId = getIntent().getStringExtra("weather_id");
+            weatherId = getIntent().getStringExtra("weather_id");
             weatherLayout.setVisibility(View.INVISIBLE);
             requestWeather(weatherId);
         }
+        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                requestWeather(weatherId);
+            }
+        });
+        navButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                drawerLayout.openDrawer(GravityCompat.START);
+            }
+        });
     }
 
     private void loadBingPic() {
@@ -154,7 +182,7 @@ public class WeatherActivity extends AppCompatActivity {
      * 根据天气id请求天气信息
      * @param weatherId 天气id
      */
-    private void requestWeather(String weatherId) {
+    public void requestWeather(String weatherId) {
         String nowWeatherUrl = "https://free-api.heweather.net/s6/weather/now?key=" + Utility.HEWEATHER_KEY + "&location=" + weatherId;
         String forecastWeatherUrl = "https://free-api.heweather.net/s6/weather/forecast?key=" + Utility.HEWEATHER_KEY + "&location=" + weatherId;
         String lifestyleUrl = "https://free-api.heweather.net/s6/weather/lifestyle?key=" + Utility.HEWEATHER_KEY + "&location=" + weatherId;
@@ -185,6 +213,7 @@ public class WeatherActivity extends AppCompatActivity {
                         } else {
                             Toast.makeText(WeatherActivity.this, "获取今日天气信息失败", Toast.LENGTH_SHORT).show();
                         }
+                        swipeRefresh.setRefreshing(false);
                     }
                 });
             }
@@ -197,6 +226,7 @@ public class WeatherActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(WeatherActivity.this, "获取天气信息出错", Toast.LENGTH_SHORT).show();
+                        swipeRefresh.setRefreshing(false);
                     }
                 });
             }
