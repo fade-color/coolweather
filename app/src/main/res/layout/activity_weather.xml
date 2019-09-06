@@ -30,7 +30,8 @@
                 <LinearLayout
                     android:orientation="vertical"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
+                    android:layout_height="wrap_content"
+                    android:fitsSystemWindows="true">
 
                     <include layout="@layout/title" />
 
@@ -53,7 +54,7 @@
             android:name="com.coolweather.android.ChooseAreaFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_gravity="start" />
+            android:layout_gravity="start"/>
 
     </androidx.drawerlayout.widget.DrawerLayout>
 
