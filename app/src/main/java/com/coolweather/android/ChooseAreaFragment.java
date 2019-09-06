@@ -1,6 +1,7 @@
 package com.coolweather.android;
 
 import android.app.ProgressDialog;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -109,6 +110,12 @@ public class ChooseAreaFragment extends Fragment {
                 } else if (currentLevel == LEVEL_CITY) {
                     selectedCity = cityList.get(i);
                     queryCounties();
+                } else if (currentLevel == LEVEL_COUNTY) {
+                    String weatherId = countyList.get(i).getWeatherId();
+                    Intent intent = new Intent(getActivity(), WeatherActivity.class);
+                    intent.putExtra("weather_id", weatherId);
+                    startActivity(intent);
+                    getActivity().finish();
                 }
             }
         });
@@ -142,7 +149,7 @@ public class ChooseAreaFragment extends Fragment {
             listView.setSelection(0);
             currentLevel = LEVEL_PROVINCE;
         } else {
-            String address = "https://restapi.amap.com/v3/config/district?key=a20cc695f185ab006ac08770755bdf2e&keywords=中国";
+            String address = "https://restapi.amap.com/v3/config/district?key=" + Utility.AMAP_KEY + "&keywords=中国";
             queryFromServer(address, "province");
         }
     }
@@ -165,7 +172,7 @@ public class ChooseAreaFragment extends Fragment {
             currentLevel = LEVEL_CITY;
         } else {
             int provinceCode = selectedProvince.getProvinceCode();
-            String address = "https://restapi.amap.com/v3/config/district?key=a20cc695f185ab006ac08770755bdf2e&keywords=" + provinceCode;
+            String address = "https://restapi.amap.com/v3/config/district?key=" + Utility.AMAP_KEY + "&keywords=" + provinceCode;
             queryFromServer(address, "city");
         }
     }
@@ -188,7 +195,7 @@ public class ChooseAreaFragment extends Fragment {
         } else {
             int provinceCode = selectedProvince.getProvinceCode();
             int cityCode = selectedCity.getCityCode();
-            String address = "https://restapi.amap.com/v3/config/district?key=a20cc695f185ab006ac08770755bdf2e&keywords=" + cityCode;
+            String address = "https://restapi.amap.com/v3/config/district?key=" + Utility.AMAP_KEY + "&keywords=" + cityCode;
             queryFromServer(address, "county");
         }
     }

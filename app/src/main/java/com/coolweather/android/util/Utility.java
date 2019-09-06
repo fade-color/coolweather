@@ -1,17 +1,34 @@
 package com.coolweather.android.util;
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.coolweather.android.db.City;
 import com.coolweather.android.db.County;
 import com.coolweather.android.db.Province;
+import com.coolweather.android.gson.ForecastWeather;
+import com.coolweather.android.gson.LifestyleWeather;
+import com.coolweather.android.gson.NowWeather;
+import com.google.gson.Gson;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+
 public class Utility {
+
+    /**
+     * 高德key
+     */
+    public static final String AMAP_KEY = "a20cc695f185ab006ac08770755bdf2e";
+
+    /**
+     * 和风天气key
+     */
+    public static final String HEWEATHER_KEY = "d688f8fef82a465da36359d904b85d6e";
 
     /**
      * 解析和处理服务器返回的省级数据
@@ -75,7 +92,17 @@ public class Utility {
                     JSONObject countyObject = allCounties.getJSONObject(i);
                     County county = new County();
                     county.setCountyName(countyObject.getString("name"));
-                    county.setWeatherId(countyObject.getString("adcode"));
+                    String countyCenter = countyObject.getString("center");
+                    String weatherId = null;
+                    try {
+                        OkHttpClient client = new OkHttpClient();
+                        Request request = new Request.Builder().url("https://free-api.heweather.net/s6/weather/now?key=d688f8fef82a465da36359d904b85d6e&location=" + countyCenter).build();
+                        Response executeResponse = client.newCall(request).execute();
+                        weatherId = new JSONObject(executeResponse.body().string()).getJSONArray("HeWeather6").getJSONObject(0).getJSONObject("basic").getString("cid");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    county.setWeatherId(weatherId);
                     county.setCityId(cityId);
                     county.save(); // 存入数据库
                 }
@@ -86,4 +113,41 @@ public class Utility {
         }
         return false;
     }
+
+    public static NowWeather handleNowWeatherResponse(String response) {
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+            JSONArray jsonArray = jsonObject.getJSONArray("HeWeather6");
+            String weatherContent = jsonArray.getJSONObject(0).toString();
+            return new Gson().fromJson(weatherContent, NowWeather.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static ForecastWeather handleForecastWeatherResponse(String response) {
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+            JSONArray jsonArray = jsonObject.getJSONArray("HeWeather6");
+            String weatherContent = jsonArray.getJSONObject(0).toString();
+            return new Gson().fromJson(weatherContent, ForecastWeather.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static LifestyleWeather handleLifestyleWeatherResponse(String response) {
+        try {
+            JSONObject jsonObject = new JSONObject(response);
+            JSONArray jsonArray = jsonObject.getJSONArray("HeWeather6");
+            String weatherContent = jsonArray.getJSONObject(0).toString();
+            return new Gson().fromJson(weatherContent, LifestyleWeather.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }
